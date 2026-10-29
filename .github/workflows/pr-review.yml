@@ -1,8 +1,12 @@
+
 name: PR Review Agent
+
 on: pull_request
+
 permissions:
   contents: read
   pull-requests: write
+
 jobs:
   review:
     runs-on: ubuntu-latest
@@ -10,10 +14,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
       - run: pip install openai
+
+      - name: Validate OpenRouter key
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          python -c "import os; k=os.getenv('OPENROUTER_API_KEY',''); print('Key configured:', bool(k.strip())); print('Expected prefix:', k.strip().startswith('sk-or-')); print('Length plausible:', len(k.strip()) > 30)"
+
       - name: Run review agent
         run: python .github/scripts/pr_review_agent.py
         env:
@@ -23,3 +36,4 @@ jobs:
           REPO: ${{ github.repository }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REVIEW_MODEL: ${{ vars.REVIEW_MODEL }}

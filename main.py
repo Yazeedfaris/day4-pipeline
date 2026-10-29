@@ -115,10 +115,12 @@ async def create_asset(asset: AssetCreate):
 
 @app.get('/assets', response_model=List[Asset])
 async def list_assets(
+    asset_type: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
     unit: Optional[str] = Query(None),
     criticality: Optional[str] = Query(None)
 ):
+    """Return non-deleted assets, optionally filtered by status, unit, or criticality."""
     result = [a for a in assets_db if not a['is_deleted']]
     if status:
         result = [a for a in result if a['status'] == status]
@@ -126,6 +128,9 @@ async def list_assets(
         result = [a for a in result if a['unit'] == unit]
     if criticality:
         result = [a for a in result if a['criticality'] == criticality]
+    if asset_type:
+        result = [a for a in result if a['asset_type'] == asset_type]
+    
     return result
 
 @app.get('/assets/{asset_id}', response_model=Asset)
